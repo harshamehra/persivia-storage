@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
+    </script>
+    <title></title>
+</head>
+<body>
+  <div class = "container">
+      <form id="xmlForm" name="xmlForm">
+          <br>
+            <input id="input" type="file">
+            <br>
+            <br>
+            <input id="searchBox" type="text" class="form-control" placeholder="Input Text">
+            <br>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" id = "get" class="btn btn-secondary">Result</button>
+            <button type="button" align-"right" id = "delete" class="btn btn-danger">Clear Collection</button>
+        </form>
+        <br>
+        <br>
+        <table class="table" id = "table"></table>
+  </div> 
+  
+  <script>
+      var readXml=null;
+      $('#xmlForm').submit(function(event) {
+          event.preventDefault();
+          var selectedFile = document.getElementById('input').files[0];
+          console.log(selectedFile);
+          var reader = new FileReader();
+          reader.onload = function(e) {
+              readXml=e.target.result;
+              console.log(readXml);
+              var searchText = $('#searchBox').val();
+              var countClients = $(readXml).find(searchText).length;
+              var data = {
+                "keyword": searchText,
+                "count": countClients
+              };
+              $.ajax({
+              'type': "POST",
+              'contentType':'application/json; charset=utf-8',
+              'dataType':'json',
+              'data':JSON.stringify(data),         
+              'url': 'http://localhost:8080/keywords',
+              'success': function (data) {
+              }
+            });
+              var parser = new DOMParser();
+              var doc = parser.parseFromString(readXml, "application/xml");
+              console.log(doc);
+          }
+          reader.readAsText(selectedFile);
+      });
+
+      $('#get').click(function() {
+        $("#table").empty()
+        $.ajax({
+            url: "http://localhost:8080/keywords",
+            cache: false,
+            success: function(data){
+                var trHTML = '';
+                trHTML += '<tr><th>' + 'Keyword' + '</th><th>' + 'Count' + '</th></tr>';
+                $.each(data, function (i, item) {
+                    trHTML += '<tr><td>' + item.keyword + '</td><td>' + item.count + '</td></tr>';
+                });
+                $('#table').append(trHTML);
+            }
+          });
+    });
+
+    $('#delete').click(function() {
+        $.ajax({
+            url: "http://localhost:8080/keywords",
+            cache: false,
+            type: 'delete',
+            success: function(data){
+                $("#table").empty()
+            }
+          });
+    });
+  </script>
+</body>
+</html>
